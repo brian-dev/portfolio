@@ -1,1 +1,2 @@
 FLASK_APP=portfolio.py
+FLASK_DEBUG=0
