@@ -1,15 +1,19 @@
-import os
-os.environ['DATABASE_URL'] = 'sqlite://'
-
 from datetime import datetime, timezone, timedelta
 import unittest
-from app import app, db
+from app import create_app, db
 from app.models import User, Post
+from config import Config
+
+
+class TestConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite://'
 
 
 class UserModelCase(unittest.TestCase):
     def setUp(self):
-        self.app_context = app.app_context()
+        self.app = create_app(TestConfig)
+        self.app_context = self.app.app_context()
         self.app_context.push()
         db.create_all()
 
@@ -44,7 +48,7 @@ class UserModelCase(unittest.TestCase):
         u1.follow(u2)
         db.session.commit()
         self.assertTrue(u1.is_following(u2))
-        self.assertEqual(u1.followings_count(), 1)
+        self.assertEqual(u1.following_count(), 1)
         self.assertEqual(u2.followers_count(), 1)
         u1_following = db.session.scalars(u1.following.select()).all()
         u2_followers = db.session.scalars(u2.followers.select()).all()
@@ -54,7 +58,7 @@ class UserModelCase(unittest.TestCase):
         u1.unfollow(u2)
         db.session.commit()
         self.assertFalse(u1.is_following(u2))
-        self.assertEqual(u1.followings_count(), 0)
+        self.assertEqual(u1.following_count(), 0)
         self.assertEqual(u2.followers_count(), 0)
 
     def test_follow_posts(self):
